@@ -7,33 +7,47 @@ from typing import Dict
 #the user input name and class are together so it's easier to add new entries later
 class Addition:
     names = ("+", "add")
+    description = "Adds the first number to the second number."
     def calculate(self, a, b):
         return a + b
 
 class Subtraction:
     names = ("-", "subtract")
+    description = "Subtracts the second number from the first number."
     def calculate(self, a, b):
         return a - b
 
 class Multiplication: 
     names = ("*", "multiply", "times")
+    description = "Multiplies the first number by the second number."
     def calculate(self, a, b):
         return a * b
 
 class Division:
     names = ("/", "divide", "divided by", "over")
+    description = "Divides the first number by the second number."
     def calculate(self, a, b):
         if b == 0:
             raise ValueError("Cannot divide by zero - you just broke the internet!")
         return a / b
 
+class IntegerDivision:
+    names = ("//", "integer divide", "floor divide")
+    description = "Divides the first number by the second number and then rounds down to a whole number (ie: leaves off the remainder)."
+    def calculate(self, a, b):
+        if b == 0:
+            raise ValueError("Cannot divide by zero - you just broke the internet!")
+        return a // b
+    
 class Power: 
     names = ("^", "power")
+    description = "Raises the first number to the power of the second number."
     def calculate(self, a, b):
         return a ** b
 
 class Root: 
-    names = ("root",)  
+    names = ("root",)
+    description = "Takes the root of the first number to the degree of the second number."
     def calculate(self, a, b): 
         if b == 0: 
             raise ValueError("Root degree cannot be zero - you just broke the internet!")
@@ -46,7 +60,7 @@ class Root:
         return a ** (1 / b)
 
 
-ALL_OPERATIONS = [Addition, Subtraction, Multiplication, Division, Power, Root]
+ALL_OPERATIONS = [Addition, Subtraction, Multiplication, Division, Power, Root, IntegerDivision]
 
 
 OPERATIONS = {}
