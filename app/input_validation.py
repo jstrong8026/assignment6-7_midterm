@@ -1,11 +1,12 @@
 import math
+from app.exceptions import ValidationError
 
 def parse_number(text):
     try:
         value = float(text)
     except ValueError:
-        raise ValueError(f"Stop playing around - '{text}' is not a valid number.")
+        raise ValidationError(f"Stop playing around - '{text}' is not a valid number.") from None
     if not math.isfinite(value):
-        raise ValueError(f"Stop playing around - '{text}' is not a valid number.")
+        raise ValidationError(f"Stop playing around - '{text}' is not a valid number.")
     return value
 
