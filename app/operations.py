@@ -33,7 +33,7 @@ class Division:
 
 class IntegerDivision:
     names = ("//", "integer divide", "floor divide")
-    description = "Divides the first number by the second number and then rounds down to a whole number (ie: leaves off the remainder)."
+    description = "Divides the first number by the second number and then \n rounds down to a whole number (ie: leaves off the remainder)."
     def calculate(self, a, b):
         if b == 0:
             raise ValueError("Cannot divide by zero - you just broke the internet!")
@@ -69,7 +69,7 @@ for operation_class in ALL_OPERATIONS:
         OPERATIONS[name] = operation_class   
 
 def get_operation(user_input):
-    key = user_input.strip().lower() #this lets the user input be case insensitive
+    key = user_input.strip().strip("'\'").lower() #this lets the user input be case insensitive
     if key not in OPERATIONS:
         raise ValueError(f"The mathematical operation '{user_input}' is not supported - type 'help' for a list of supported operations.")
     
