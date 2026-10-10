@@ -24,7 +24,8 @@ def get_helper_text():
         lines.append(line)
 
     lines += [
-        "  (Capital letters and extra spaces will be ignored, so don't stress about them.)",
+        "",
+        "Capital letters and extra spaces will be ignored, so don't stress about them.",
         "",
         "Commands (you can enter these at any prompt):",
         "  help - Displays the list of supported commands",
