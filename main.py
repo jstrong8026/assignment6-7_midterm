@@ -1,6 +1,7 @@
 from app.operations import get_operation
 from app.input_validation import parse_number
 from app.helper_text import get_helper_text
+from app.exceptions import CalculatorError
 
 #allows users to input 'help' or 'exit' commands
 def ask(prompt):
@@ -35,7 +36,7 @@ def main():
             operation = get_operation(symbol)
             print() #adding a blank space to make it easier to see the result
             print("Result:", operation.calculate(a, b))
-        except ValueError as error:
+        except CalculatorError as error:
             print("Error:", error)
    
 
