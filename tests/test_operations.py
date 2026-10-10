@@ -4,6 +4,9 @@ from typing import Any, Dict, Type
 
 from app.operations import get_operation
 from app import operations
+from app.exceptions import OperationError
+from app.exceptions import ValidationError
+
 
 #I am allowing users to enter a symbol or word for the calculation
 @pytest.mark.parametrize("symbol, a, b, expected", [
@@ -23,8 +26,8 @@ from app import operations
     ("root", 27, 3, 3),
     ("modulus", 10, 3, 1),
     ("mod", 10, 3, 1),
-    ("percent", 40, 200, 80),
-    ("percent of", 40, 200, 80),
+    ("percent", 40, 200, 20),
+    ("percent of", 40, 200, 20),
     ("//", 10, 3, 3),
     ("integer divide", 10, 3, 3),
     ("int_divide", 10, 3, 3),
@@ -38,30 +41,34 @@ def test_operations(symbol, a, b, expected):
     assert result == pytest.approx(expected)
 
 def test_divide_by_zero():
-    with pytest.raises(ValueError):
+    with pytest.raises(OperationError):
         get_operation("/").calculate(5, 0)
 
 def test_integer_divide_by_zero():
-    with pytest.raises(ValueError):
+    with pytest.raises(OperationError):
         get_operation("//").calculate(5, 0)
 
 def test_odd_root_of_negative():
     assert get_operation("root").calculate(-8, 3) == pytest.approx(-2)
 
 def test_even_root_of_negative():
-    with pytest.raises(ValueError):
+    with pytest.raises(OperationError):
         get_operation("root").calculate(-4, 2)
 
 def test_modulus_divide_by_zero():
-    with pytest.raises(ValueError):
+    with pytest.raises(OperationError):
         get_operation("mod").calculate(5, 0)
 
+def test_percent_divide_by_zero():
+    with pytest.raises(OperationError):
+        get_operation("percent").calculate(40, 0)        
+
 def test_unknown_symbol():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValidationError):
         get_operation("%")
 
 def test_unknown_operation_message():
-    with pytest.raises(ValueError, match="spinach"):
+    with pytest.raises(ValidationError, match="spinach"):
         get_operation("spinach")
 
 #I keep forgetting to add new operations, so I'm adding a test to make sure I add them
