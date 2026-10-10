@@ -16,7 +16,7 @@ def get_helper_text():
     ]
 
     for operation_class in ALL_OPERATIONS:
-        names = " or ".join(operation_class.names)
+        names = " or ".join(f"'{name}'" for name in operation_class.names)
         description = getattr(operation_class, "description", "")
         line = f"- {names}"
         if description: 
