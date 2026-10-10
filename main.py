@@ -2,6 +2,7 @@ from app.operations import get_operation
 from app.input_validation import parse_number
 from app.helper_text import get_helper_text
 
+#allows users to input 'help' or 'exit' commands
 def ask(prompt):
     while True:
         text=input(prompt).strip()
@@ -13,9 +14,9 @@ def ask(prompt):
         return text
 
 def main():
-    print("Welcome to Joe's REPL calculator-o-matic 5000! \n Type 'help' for instructions or type 'exit' to quit.")
+    while True: #because I put 'while true' here, the welcome and prompt for first number will appear a calculation is completed
+        print("Welcome to Joe's REPL calculator-o-matic 5000! \n Type 'help' for instructions or type 'exit' to quit.")
 
-    while True:
         first = ask("Enter the first number: ")
         if first is None:
             break
@@ -32,6 +33,7 @@ def main():
             a = parse_number(first)
             b = parse_number(second)
             operation = get_operation(symbol)
+            print() #adding a blank space to make it easier to see the result
             print("Result:", operation.calculate(a, b))
         except ValueError as error:
             print("Error:", error)
