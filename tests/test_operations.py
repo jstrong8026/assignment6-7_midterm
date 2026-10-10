@@ -17,12 +17,19 @@ from app import operations
     ("/", 10, 2, 5),
     ("divide", 10, 2, 5),
     ("divided by", 10, 2, 5),
-    ("//", 10, 3, 3),
-    ("integer divide", 10, 3, 3),
     ("over", 10, 2, 5),
     ("^", 2, 3, 8),
     ("power", 2, 3, 8),
-    ("root", 27, 3, 3)
+    ("root", 27, 3, 3),
+    ("modulus", 10, 3, 1),
+    ("mod", 10, 3, 1),
+    ("percent", 40, 200, 80),
+    ("percent of", 40, 200, 80),
+    ("//", 10, 3, 3),
+    ("integer divide", 10, 3, 3),
+    ("int_divide", 10, 3, 3),
+    ("absolute difference", 3, 10, 7),
+    ("abs_diff", 3, 10, 7),
 
 ])
 
@@ -44,6 +51,10 @@ def test_odd_root_of_negative():
 def test_even_root_of_negative():
     with pytest.raises(ValueError):
         get_operation("root").calculate(-4, 2)
+
+def test_modulus_divide_by_zero():
+    with pytest.raises(ValueError):
+        get_operation("mod").calculate(5, 0)
 
 def test_unknown_symbol():
     with pytest.raises(ValueError):

@@ -32,7 +32,7 @@ class Division:
         return a / b
 
 class IntegerDivision:
-    names = ("//", "integer divide", "floor divide")
+    names = ("//", "integer divide", "int_divide", "floor divide")
     description = "Divides the first number by the second number and then \n rounds down to a whole number (ie: leaves off the remainder)."
     def calculate(self, a, b):
         if b == 0:
@@ -59,8 +59,28 @@ class Root:
             return -((-a) ** (1 / b))
         return a ** (1 / b)
 
+class Modulus:
+    names = ("modulus", "mod")
+    description = "Divides the first number by the second number but only returns the remainder."
+    def calculate(self, a, b):
+        if b == 0:
+            raise ValueError("Cannot divide by zero - you just broke the internet!")
+        return a % b
 
-ALL_OPERATIONS = [Addition, Subtraction, Multiplication, Division, Power, Root, IntegerDivision]
+class Percent:
+    names = ("percent", "percent of")
+    description = "Shows A (First Number) percent of B (Second Number)."
+    def calculate(self, a, b):
+        return (a / 100) * b
+
+class AbsoluteDifference:
+    names = ("absolute difference", "abs_diff")
+    description = "Shows the distance between two numbers (always returns a positive value)"
+    def calculate(self, a, b):
+        return abs(a - b)
+
+    
+ALL_OPERATIONS = [Addition, Subtraction, Multiplication, Division, Power, Root, Modulus, IntegerDivision, Percent, AbsoluteDifference]
 
 
 OPERATIONS = {}
