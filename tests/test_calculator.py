@@ -71,7 +71,7 @@ def test_clear_history_empties_history():
     calc = Calculator()
     calc.calculate("add", 2, 3)
 
-    calc.clear_history
+    calc.clear_history()
 
     assert calc.history == []
 
