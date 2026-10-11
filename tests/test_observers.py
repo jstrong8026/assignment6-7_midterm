@@ -1,8 +1,10 @@
 import pytest
 import logging
+import pandas as pd
 from app.calculator import Calculator
-from app.history import HistoryObserver, LoggingObserver
+from app.history import HistoryObserver, LoggingObserver, AutoSaveObserver, save_history
 from app.exceptions import OperationError
+
 
 class RecordingObserver(HistoryObserver):
     def __init__(self):
@@ -81,3 +83,54 @@ def test_logging_observer_ignores_failed_calculations(caplog):
             calc.calculate("/", 1, 0)
 
     assert caplog.records == []
+
+#creating tests for pandas to create csv file
+def test_auto_save_writes_csv_after_calculation(tmp_path):
+    csv_file = tmp_path / "history.csv"
+    calc = Calculator()
+    calc.register_observer(AutoSaveObserver(calc, csv_file))
+
+    calc.calculate("add", 2, 3)
+
+    df = pd.read_csv(csv_file)
+    assert len(df) == 1
+    assert df.loc[0, "operation"] == "add"
+    assert df.loc[0, "result"] == 5
+
+def test_autosave_saves_full_history(tmp_path):
+    csv_file = tmp_path / "history.csv"
+    calc = Calculator()
+    calc.register_observer(AutoSaveObserver(calc, csv_file))
+
+    calc.calculate("add", 2, 3)
+    calc.calculate("multiply", 4, 5)
+
+    assert len(pd.read_csv(csv_file)) == 2
+
+def test_autosave_creates_missing_folder(tmp_path):
+    csv_file = tmp_path / "nested" / "history.csv"
+    calc = Calculator()
+    calc.register_observer(AutoSaveObserver(calc, csv_file))
+
+    calc.calculate("add", 2, 3)
+
+    assert csv_file.exists()
+
+def test_failed_calculation_does_not_save(tmp_path):
+    csv_file = tmp_path / "history.csv"
+    calc = Calculator()
+    calc.register_observer(AutoSaveObserver(calc, csv_file))
+
+    with pytest.raises(Exception):
+        calc.calculate("/", 1, 0)
+
+    assert not csv_file.exists()
+
+def test_save_with_empty_history_keeps_headers(tmp_path):
+    csv_file = tmp_path / "history.csv"
+
+    save_history([], csv_file)
+
+    df = pd.read_csv(csv_file)
+    assert len(df) == 0
+    assert list(df.columns) == ["operation", "operand_a", "operand_b", "result", "timestamp"]
