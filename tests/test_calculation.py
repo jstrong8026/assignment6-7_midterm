@@ -1,0 +1,18 @@
+import pytest
+from dataclasses import FrozenInstanceError
+from app.calculation import Calculation
+
+def test_to_dict_has_expected_keys():
+    data = Calculation("Add", 2, 3, 5).to_dict()
+    assert set(data) == {"operation", "operand_a", "operand_b", "result", "timestamp"}
+
+def test_round_trip_gives_back_equal_calculation():
+    original = Calculation("Add", 2, 3, 5)
+    restored = Calculation.from_dict(original.to_dict())
+    assert restored == original
+
+def test_calculation_cannot_be_modified():
+    calc = Calculation("Add", 2, 3, 5)
+    with pytest.raises(FrozenInstanceError):
+        calc.result = 99
+        
