@@ -6,7 +6,8 @@ from app.calculator_memento import CalculatorMemento
 def test_memento_cannot_be_modified():
     memento = CalculatorMemento(())
     with pytest.raises(FrozenInstanceError):
-        memento.history = ("changed",)
+        memento.history = ("changed",) # pyright: ignore[reportAttributeAccessIssue]
+        #suppressing the pyright warning because I know the history is fixed. This test is confirming that.
 
 def test_snapshot_is_not_affected_by_later_calculations():
     calc = Calculator()
