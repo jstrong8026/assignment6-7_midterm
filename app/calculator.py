@@ -32,3 +32,11 @@ class Calculator:
             raise OperationError("Nothing to redo - make some calculations, undo them, then try to redo")
         self._undo_stack.append(self._snapshot())
         self.history = list(self._redo_stack.pop().history)
+
+    def clear_history(self):
+        if not self.history:
+            return
+        self._undo_stack.append(self._snapshot())
+        self._redo_stack.clear()
+        self.history = []
+        

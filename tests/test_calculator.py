@@ -67,3 +67,29 @@ def test_failed_calculation_creates_no_undo_step():
     with pytest.raises(OperationError, match="Nothing to undo - you can't undo what was never done!"):
         calc.undo()
 
+def test_clear_history_empties_history():
+    calc = Calculator()
+    calc.calculate("add", 2, 3)
+
+    calc.clear_history
+
+    assert calc.history == []
+
+def test_undo_restores_cleared_history():
+    calc = Calculator()
+    calc.calculate("add", 2, 3)
+    calc.clear_history()
+
+    calc.undo()
+
+    assert len(calc.history) == 1
+
+def test_clearing_empty_history_crates_no_undo_step():
+    calc = Calculator()
+    calc.clear_history()
+
+    with pytest.raises(OperationError, match="Nothing to undo - you can't undo what was never done!"):
+        calc.undo()
+
+
+
