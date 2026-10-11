@@ -8,6 +8,17 @@ class Calculator:
         self.history = []
         self._undo_stack = []
         self._redo_stack = []
+        self._observers = []
+
+    def register_observer(self, observer):
+        self._observers.append(observer)
+
+    def remove_observer(self, observer):
+        self._observers.remove(observer)
+
+    def _notify(self, calculation):
+        for observer in self._observers:
+            observer.update(calculation)
 
     def _snapshot(self):
         return CalculatorMemento(tuple(self.history))
@@ -19,6 +30,7 @@ class Calculator:
         self._undo_stack.append(self._snapshot())
         self._redo_stack.clear()
         self.history.append(calculation)
+        self._notify(calculation)
         return result
 
     def undo(self):
@@ -39,4 +51,3 @@ class Calculator:
         self._undo_stack.append(self._snapshot())
         self._redo_stack.clear()
         self.history = []
-        
