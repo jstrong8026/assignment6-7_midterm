@@ -13,25 +13,25 @@ class Operation(ABC):
 
 #the user input 'name' and 'description' are together so it's easier to add new entries later
 class Addition(Operation):
-    names = ("+", "add")
+    names = ("add", "+")
     description = "Adds the first number to the second number."
     def calculate(self, a, b):
         return a + b
 
 class Subtraction(Operation):
-    names = ("-", "subtract")
+    names = ("subtract", "-")
     description = "Subtracts the second number from the first number."
     def calculate(self, a, b):
         return a - b
 
 class Multiplication(Operation): 
-    names = ("*", "multiply", "times")
+    names = ("multiply", "*", "times")
     description = "Multiplies the first number by the second number."
     def calculate(self, a, b):
         return a * b
 
 class Division(Operation):
-    names = ("/", "divide", "divided by", "over")
+    names = ("divide", "/", "divided by", "over")
     description = "Divides the first number by the second number."
     def calculate(self, a, b):
         if b == 0:
@@ -39,7 +39,7 @@ class Division(Operation):
         return a / b
 
 class IntegerDivision(Operation):
-    names = ("//", "integer divide", "int_divide", "floor divide")
+    names = ("int_divide", "//", "integer divide", "floor divide")
     description = "Divides the first number by the second number and then \n rounds down to a whole number (ie: leaves off the remainder)."
     def calculate(self, a, b):
         if b == 0:
@@ -47,7 +47,7 @@ class IntegerDivision(Operation):
         return a // b
     
 class Power(Operation): 
-    names = ("^", "power")
+    names = ("power", "^")
     description = "Raises the first number to the power of the second number."
     def calculate(self, a, b):
         return a ** b
@@ -83,7 +83,7 @@ class Percent(Operation):
         return (a / b) * 100
 
 class AbsoluteDifference(Operation):
-    names = ("absolute difference", "abs_diff")
+    names = ("abs_diff", "absolute difference")
     description = "Shows the distance between two numbers (always returns a positive value)"
     def calculate(self, a, b):
         return abs(a - b)
