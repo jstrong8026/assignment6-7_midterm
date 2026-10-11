@@ -3,27 +3,34 @@ from decimal import Decimal
 from typing import Dict
 from app.exceptions import OperationError, ValidationError
 
+class Operation(ABC):
+    names = ()
+    description = ""
+
+    @abstractmethod
+    def calculate(self, a, b):
+        """Perform the operation and resturn the results"""
 
 #the user input 'name' and 'description' are together so it's easier to add new entries later
-class Addition:
+class Addition(Operation):
     names = ("+", "add")
     description = "Adds the first number to the second number."
     def calculate(self, a, b):
         return a + b
 
-class Subtraction:
+class Subtraction(Operation):
     names = ("-", "subtract")
     description = "Subtracts the second number from the first number."
     def calculate(self, a, b):
         return a - b
 
-class Multiplication: 
+class Multiplication(Operation): 
     names = ("*", "multiply", "times")
     description = "Multiplies the first number by the second number."
     def calculate(self, a, b):
         return a * b
 
-class Division:
+class Division(Operation):
     names = ("/", "divide", "divided by", "over")
     description = "Divides the first number by the second number."
     def calculate(self, a, b):
@@ -31,7 +38,7 @@ class Division:
             raise OperationError("Cannot divide by zero - you just broke the internet!")
         return a / b
 
-class IntegerDivision:
+class IntegerDivision(Operation):
     names = ("//", "integer divide", "int_divide", "floor divide")
     description = "Divides the first number by the second number and then \n rounds down to a whole number (ie: leaves off the remainder)."
     def calculate(self, a, b):
@@ -39,13 +46,13 @@ class IntegerDivision:
             raise OperationError("Cannot divide by zero - you just broke the internet!")
         return a // b
     
-class Power: 
+class Power(Operation): 
     names = ("^", "power")
     description = "Raises the first number to the power of the second number."
     def calculate(self, a, b):
         return a ** b
 
-class Root: 
+class Root(Operation): 
     names = ("root",)
     description = "Takes the root of the first number to the degree of the second number."
     def calculate(self, a, b): 
@@ -59,7 +66,7 @@ class Root:
             return -((-a) ** (1 / b))
         return a ** (1 / b)
 
-class Modulus:
+class Modulus(Operation):
     names = ("modulus", "mod")
     description = "Divides the first number by the second number but only returns the remainder."
     def calculate(self, a, b):
@@ -67,7 +74,7 @@ class Modulus:
             raise OperationError("Cannot divide by zero - you just broke the internet!")
         return a % b
 
-class Percent:
+class Percent(Operation):
     names = ("percent", "percent of")
     description = "Shows A (First Number) percent of B (Second Number)."
     def calculate(self, a, b):
@@ -75,7 +82,7 @@ class Percent:
             raise OperationError("Cannot take the percentage of zero - you just broke a percent of the internet!")
         return (a / b) * 100
 
-class AbsoluteDifference:
+class AbsoluteDifference(Operation):
     names = ("absolute difference", "abs_diff")
     description = "Shows the distance between two numbers (always returns a positive value)"
     def calculate(self, a, b):

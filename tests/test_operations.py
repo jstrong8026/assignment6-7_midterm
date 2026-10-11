@@ -2,7 +2,7 @@ import pytest
 from decimal import Decimal
 from typing import Any, Dict, Type
 
-from app.operations import get_operation
+from app.operations import get_operation, Operation
 from app import operations
 from app.exceptions import OperationError
 from app.exceptions import ValidationError
@@ -74,5 +74,15 @@ def test_unknown_operation_message():
 #I keep forgetting to add new operations, so I'm adding a test to make sure I add them
 def test_every_operation_is_registered(): 
     for name, value in vars(operations).items():
-        if isinstance(value, type) and hasattr(value, "names"):
+        if isinstance(value, type) and hasattr(value, "names") and value is not operations.Operation:
             assert value in operations.ALL_OPERATIONS, f"{name} is not registered in ALL_OPERATIONS"
+
+def test_operation_cannot_be_created_directly():
+    with pytest.raises(TypeError):
+        Operation()
+
+def test_subclass_must_define_calculate():
+    class Incomplete(Operation):
+        pass
+    with pytest.raises(TypeError):
+        Incomplete()
