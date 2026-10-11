@@ -11,7 +11,8 @@ class Operation(ABC):
     def calculate(self, a, b):
         """Perform the operation and resturn the results"""
 
-#the user input 'name' and 'description' are together so it's easier to add new entries later
+#'names' and 'description' get pulled into my help file.
+#first entry in names is the entry in my history file, ie: add and not +
 class Addition(Operation):
     names = ("add", "+")
     description = "Adds the first number to the second number."

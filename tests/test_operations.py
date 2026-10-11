@@ -36,10 +36,12 @@ from app.exceptions import ValidationError
 
 ])
 
+#this tests the basic math fuctions (add, subtract, etc.)
 def test_operations(symbol, a, b, expected):
     result = OperationFactory.create(symbol).calculate(a, b)
     assert result == pytest.approx(expected)
 
+#these start testing the different mathematical errors like divide by zero
 def test_divide_by_zero():
     with pytest.raises(OperationError):
         OperationFactory.create("/").calculate(5, 0)
@@ -63,6 +65,7 @@ def test_percent_divide_by_zero():
     with pytest.raises(OperationError):
         OperationFactory.create("percent").calculate(40, 0)        
 
+#this looks for unknown symbols in the mathematical function user input
 def test_unknown_symbol():
     with pytest.raises(ValidationError):
         OperationFactory.create("%")
@@ -77,12 +80,16 @@ def test_every_operation_is_registered():
         if isinstance(value, type) and hasattr(value, "names") and value is not operations.Operation:
             assert value in operations.ALL_OPERATIONS, f"{name} is not registered in ALL_OPERATIONS"
 
+
 def test_operation_cannot_be_created_directly():
     with pytest.raises(TypeError):
-        Operation()
+        Operation() # type: ignore
+        #I am ignoring the error because this test is intentionally trying something that isn't possible
 
 def test_subclass_must_define_calculate():
     class Incomplete(Operation):
         pass
+    
     with pytest.raises(TypeError):
-        Incomplete()
+        Incomplete() # type: ignore
+        #I am ignoring the error because this test is intentionally trying something that isn't possible

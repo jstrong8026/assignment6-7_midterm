@@ -14,5 +14,6 @@ def test_round_trip_gives_back_equal_calculation():
 def test_calculation_cannot_be_modified():
     calc = Calculation("Add", 2, 3, 5)
     with pytest.raises(FrozenInstanceError):
-        calc.result = 99
+        calc.result = 99 # type: ignore
+        #intentionally ignoring this as the test is ensuring it won't get any restult
         
