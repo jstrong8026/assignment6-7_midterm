@@ -1,6 +1,7 @@
 import pytest
+import logging
 from app.calculator import Calculator
-from app.history import HistoryObserver
+from app.history import HistoryObserver, LoggingObserver
 from app.exceptions import OperationError
 
 class RecordingObserver(HistoryObserver):
@@ -10,6 +11,7 @@ class RecordingObserver(HistoryObserver):
     def update(self, calculation):
         self.received.append(calculation)
 
+#testing basic observer functions
 def test_observer_is_notified_of_calculation():
     calc = Calculator()
     observer = RecordingObserver()
@@ -51,8 +53,31 @@ def test_failed_calculation_does_not_notify_observers():
 
     assert observer.received == []
 
+#makes sure you can't directly create a history observer
 def test_history_observer_cannot_be_created_directly():
     with pytest.raises(TypeError):
         HistoryObserver() # pyright: ignore[reportAbstractUsage]
         #ignoring this warning as it's expected
 
+#checking observer is logging messages
+def test_logging_observer_logs_each_calculation(caplog):
+    calc = Calculator()
+    calc.register_observer(LoggingObserver())
+
+    with caplog.at_level(logging.INFO,logger="calculator"):
+        calc.calculate("add", 2, 3)
+
+    assert len(caplog.records) == 1
+    message = caplog.records[0].getMessage()
+    assert "add" in message
+    assert "5" in message
+
+def test_logging_observer_ignores_failed_calculations(caplog):
+    calc = Calculator()
+    calc.register_observer(LoggingObserver())
+
+    with caplog.at_level(logging.INFO, logger="calculator"):
+        with pytest.raises(Exception):
+            calc.calculate("/", 1, 0)
+
+    assert caplog.records == []
