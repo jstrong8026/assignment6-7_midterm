@@ -97,8 +97,10 @@ for operation_class in ALL_OPERATIONS:
     for name in operation_class.names:
         OPERATIONS[name] = operation_class   
 
-def get_operation(user_input):
-    key = user_input.strip().strip("'\'").lower() #this lets the user input be case insensitive
-    if key not in OPERATIONS:
-        raise ValidationError(f"The mathematical operation '{user_input}' is not supported - type 'help' for a list of supported operations.")
-    return OPERATIONS[key]()
+class OperationFactory:
+    @classmethod
+    def create(cls, name):
+        key = name.strip().strip("'\'").lower() #this lets the user input be case insensitive
+        if key not in OPERATIONS:
+            raise ValidationError(f"The mathematical operation '{name}' is not supported - type 'help' for a list of supported operations.")
+        return OPERATIONS[key]()

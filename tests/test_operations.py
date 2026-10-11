@@ -2,7 +2,7 @@ import pytest
 from decimal import Decimal
 from typing import Any, Dict, Type
 
-from app.operations import get_operation, Operation
+from app.operations import OperationFactory, Operation
 from app import operations
 from app.exceptions import OperationError
 from app.exceptions import ValidationError
@@ -37,39 +37,39 @@ from app.exceptions import ValidationError
 ])
 
 def test_operations(symbol, a, b, expected):
-    result = get_operation(symbol).calculate(a, b)
+    result = OperationFactory.create(symbol).calculate(a, b)
     assert result == pytest.approx(expected)
 
 def test_divide_by_zero():
     with pytest.raises(OperationError):
-        get_operation("/").calculate(5, 0)
+        OperationFactory.create("/").calculate(5, 0)
 
 def test_integer_divide_by_zero():
     with pytest.raises(OperationError):
-        get_operation("//").calculate(5, 0)
+        OperationFactory.create("//").calculate(5, 0)
 
 def test_odd_root_of_negative():
-    assert get_operation("root").calculate(-8, 3) == pytest.approx(-2)
+    assert OperationFactory.create("root").calculate(-8, 3) == pytest.approx(-2)
 
 def test_even_root_of_negative():
     with pytest.raises(OperationError):
-        get_operation("root").calculate(-4, 2)
+        OperationFactory.create("root").calculate(-4, 2)
 
 def test_modulus_divide_by_zero():
     with pytest.raises(OperationError):
-        get_operation("mod").calculate(5, 0)
+        OperationFactory.create("mod").calculate(5, 0)
 
 def test_percent_divide_by_zero():
     with pytest.raises(OperationError):
-        get_operation("percent").calculate(40, 0)        
+        OperationFactory.create("percent").calculate(40, 0)        
 
 def test_unknown_symbol():
     with pytest.raises(ValidationError):
-        get_operation("%")
+        OperationFactory.create("%")
 
 def test_unknown_operation_message():
     with pytest.raises(ValidationError, match="spinach"):
-        get_operation("spinach")
+        OperationFactory.create("spinach")
 
 #I keep forgetting to add new operations, so I'm adding a test to make sure I add them
 def test_every_operation_is_registered(): 
