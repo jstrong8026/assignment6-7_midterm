@@ -1,4 +1,4 @@
-from app.operations import get_operation
+from app.operations import OperationFactory
 from app.input_validation import parse_number
 from app.helper_text import get_helper_text
 from app.exceptions import CalculatorError
@@ -33,7 +33,7 @@ def main():
         try:
             a = parse_number(first)
             b = parse_number(second)
-            operation = get_operation(symbol)
+            operation = OperationFactory.create(symbol)
             print() #adding a blank space to make it easier to see the result
             print("Result:", operation.calculate(a, b))
         except CalculatorError as error:
