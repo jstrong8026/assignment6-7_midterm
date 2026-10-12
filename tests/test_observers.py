@@ -13,6 +13,17 @@ class RecordingObserver(HistoryObserver):
     def update(self, calculation):
         self.received.append(calculation)
 
+#this is for my code that allows updates during a clear, undo, etc.
+class ChangeCountingObserver(HistoryObserver):
+    def __init__(self):
+        self.changes = 0
+
+    def update(self, calculation):
+        pass
+
+    def history_changed(self):
+        self.changes += 1
+
 #testing basic observer functions
 def test_observer_is_notified_of_calculation():
     calc = Calculator()
@@ -134,3 +145,49 @@ def test_save_with_empty_history_keeps_headers(tmp_path):
     df = pd.read_csv(csv_file)
     assert len(df) == 0
     assert list(df.columns) == ["operation", "operand_a", "operand_b", "result", "timestamp"]
+
+
+def test_undo_redo_clear_announce_history_changes():
+    calc = Calculator()
+    observer = ChangeCountingObserver()
+    calc.register_observer (observer)
+
+    calc.calculate("add", 1, 1)
+    assert observer.changes == 0
+
+    calc.undo()
+    assert observer.changes == 1
+    calc.redo()
+    assert observer.changes == 2
+    calc.clear_history()
+    assert observer.changes == 3
+
+
+def test_failed_undo_does_not_announce_change():
+    calc = Calculator()
+    observer = ChangeCountingObserver()
+    calc.register_observer(observer)
+
+    with pytest.raises(OperationError):
+        calc.undo()
+
+    assert observer.changes == 0
+
+def test_autosave_file_follows_undo_redo_clear(tmp_path):
+    csv_file = tmp_path / "history.csv"
+    calc = Calculator()
+    calc.register_observer(AutoSaveObserver(calc, csv_file))
+    calc.calculate("add", 2, 3)
+    calc.calculate("multiply", 4, 5)
+
+    calc.undo()
+    assert len(pd.read_csv(csv_file)) == 1
+
+    calc.redo()
+    assert len(pd.read_csv(csv_file)) == 2
+
+    calc.clear_history()
+    assert len(pd.read_csv(csv_file)) == 0
+
+    calc.undo()
+    assert len(pd.read_csv(csv_file)) == 2

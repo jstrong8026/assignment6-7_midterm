@@ -20,6 +20,11 @@ class Calculator:
         for observer in self._observers:
             observer.update(calculation)
 
+    #this looks for changes in history
+    def _notify_history_changed(self):
+        for observer in self._observers:
+            observer.history_changed()
+
     def _snapshot(self):
         return CalculatorMemento(tuple(self.history))
 
@@ -38,12 +43,14 @@ class Calculator:
             raise OperationError("Nothing to undo - you can't undo what was never done!")
         self._redo_stack.append(self._snapshot())
         self.history = list(self._undo_stack.pop().history)
+        self._notify_history_changed()
 
     def redo(self):
         if not self._redo_stack:
             raise OperationError("Nothing to redo - make some calculations, undo them, then try to redo")
         self._undo_stack.append(self._snapshot())
         self.history = list(self._redo_stack.pop().history)
+        self._notify_history_changed()
 
     def clear_history(self):
         if not self.history:
@@ -51,3 +58,4 @@ class Calculator:
         self._undo_stack.append(self._snapshot())
         self._redo_stack.clear()
         self.history = []
+        self._notify_history_changed()

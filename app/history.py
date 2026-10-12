@@ -11,6 +11,11 @@ class HistoryObserver(ABC):
     def update(self, calculation: Calculation) -> None:
         """called by the Calculator after each successful calculation"""
 
+    #I'm adding this because the way I wrote the above code
+    #the history and csv get out of synch after a clear but before the next successful calculation
+    def history_changed(self) -> None:
+        """Called only after undo, redo or clear"""
+
 class LoggingObserver(HistoryObserver):
     """writes a log line for every calculatin"""
 
@@ -31,6 +36,10 @@ class AutoSaveObserver(HistoryObserver):
         self.file_path = file_path
 
     def update(self, calculation: Calculation) -> None:
+        save_history(self.calculator.history, self.file_path)
+
+    #this looks for changes in history to deal wtih clear, undo, etc.
+    def history_changed(self) -> None:
         save_history(self.calculator.history, self.file_path)
 
 #adding the pandas save history option
