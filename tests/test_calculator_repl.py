@@ -3,6 +3,7 @@ import pytest
 from app.calculator import Calculator
 from app.calculator_repl import CalculatorREPL
 from app.operations import OperationFactory
+from app.helper_text import get_helper_text
 
 def make_repl(inputs, calculator=None, **kwargs):
     """Build a REPL that 'types' the given lines and records what it prints."""
@@ -26,12 +27,12 @@ def make_repl(inputs, calculator=None, **kwargs):
 def test_exit_ends_loop():
     repl, output = make_repl(["exit"])
     repl.run()
-    assert output[-1] == "Goodbye!"
+    assert output[-1] == "Goodbye - thank you for doing math with me!"
 
 def test_end_of_input_exits_gracefully():
     repl, output = make_repl([])
     repl.run()
-    assert output[-1] == "Goodbye!"
+    assert output[-1] == "Goodbye - thank you for doing math with me!"
 
 def test_operation_command_prints_results():
     repl, output = make_repl(["add", "2", "3", "exit"])
@@ -88,7 +89,7 @@ def test_calculation_errors_reported_not_raised():
     repl, output = make_repl(["divide", "1", "0", "exit"])
     repl.run()
     assert any("zero" in line for line in output)
-    assert output[-1] == "Goodbye!"
+    assert output[-1] == "Goodbye - thank you for doing math with me!"
 
 @pytest.mark.parametrize("command", [
     "add", "subtract", "multiply", "divide", "power", "root",
@@ -96,3 +97,75 @@ def test_calculation_errors_reported_not_raised():
 ])
 def test_every_required_command_is_a_registered_name(command):
     OperationFactory.create(command)
+
+def test_history_lists_calcualations():
+    repl, output = make_repl(["add", "2", "3", "history", "exit"])
+    repl.run()
+    assert any(line.startswith("1.") and "= 5" in line for line in output)
+
+def test_history_when_empty():
+    repl, output = make_repl(["history", "exit"])
+    repl.run()
+    assert "No calculations yet - make some math!" in output
+
+def test_clear_empties_history():
+    calc = Calculator()
+    repl, output = make_repl(["add", "2", "3", "clear", "exit"], calc)
+    repl.run()
+    assert calc.history == []
+    assert "History cleared - you are now a blank slate." in output
+
+def test_clear_on_empty_history_notification():
+    repl, output = make_repl(["clear", "exit"])
+    repl.run()
+    assert "History is already empty." in output
+
+def test_undo_and_redo():
+    calc = Calculator()
+    repl, output = make_repl(["add", "2", "3", "undo", "redo", "exit"], calc)
+    repl.run()
+    assert "Undid last change." in output
+    assert "Redid last change." in output
+    assert len(calc.history) == 1
+
+@pytest.mark.parametrize("command, message", [
+    ("undo", "Nothing to undo"),
+    ("redo", "Nothing to redo"),
+])
+def test_undo_redo_with_nothing_to_do_report_error(command, message):
+    repl, output = make_repl([command, "exit"])
+    repl.run()
+    assert any(message in line for line in output)
+    assert output[-1] == "Goodbye - thank you for doing math with me!"
+
+
+def test_save_then_load_roundtrip(tmp_path):
+    calc = Calculator()
+    repl, _= make_repl(
+        ["add", "2", "3", "save", "clear", "load", "exit"],
+        calc,
+        history_path=tmp_path / "history.csv",
+    )
+    repl.run()
+    assert [entry.result for entry in calc.history] == [5]
+
+def test_save_and_load_without_configured_path_error():
+    repl, output = make_repl(["save", "load", "exit"])
+    repl.run()
+    assert sum("No history file" in line for line in output) == 2
+
+def test_load_missing_file_reports_error(tmp_path):
+    repl, output = make_repl(["load", "exit"], history_path=tmp_path / "nope.csv")
+    repl.run()
+    assert any("not found" in line for line in output)
+
+def test_help_command_shows_help_text():
+    repl, output = make_repl(["help", "exit"])
+    repl.run()
+    assert get_helper_text() in output
+
+def test_help_mentions_every_repl_command():
+    repl, _= make_repl([])
+    text = get_helper_text().lower()
+    for name in list(repl._commands) + ["exit"]:
+        assert name in text
