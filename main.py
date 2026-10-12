@@ -25,7 +25,12 @@ def main():
             AutoSaveObserver(calculator, config.history_path, config.default_encoding)
         )
 
-    CalculatorREPL(calculator, max_input_value=config.max_input_value).run()
+    CalculatorREPL(
+        calculator, 
+        max_input_value=config.max_input_value,
+        history_path=config.history_path,
+        encoding=config.default_encoding,
+        ).run()
 
 if __name__ == "__main__":
     main()
