@@ -1,12 +1,13 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from decimal import Decimal
 
 @dataclass(frozen=True)
 class Calculation:
     operation: str
-    operand_a: float
-    operand_b: float
-    result: float
+    operand_a: Decimal
+    operand_b: Decimal
+    result: Decimal
     timestamp: datetime = field(default_factory=datetime.now)
     
     def to_dict(self):

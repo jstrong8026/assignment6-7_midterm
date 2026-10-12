@@ -1,6 +1,7 @@
 import pytest
 from app.calculator import Calculator
 from app.exceptions import OperationError, ValidationError, ConfigurationError
+from decimal import Decimal
 
 def test_calculate_resturns_the_expected_result():
     assert Calculator().calculate("+", 2, 3) == 5
@@ -121,7 +122,44 @@ def test_invalid_max_history_size_rejected(bad_size):
     with pytest.raises(ConfigurationError):
         Calculator(max_history_size=bad_size)
 
+#testing rounding log
+def test_results_are_rounded_to_configured_precision():
+    calc = Calculator(precision=2)
+    assert calc.calculate("/", 1, 3) == Decimal("0.33")
 
+def test_rounding_half_up():
+    calc = Calculator(precision=1)
+    assert calc.calculate("*", Decimal("0.25"), 1) == Decimal("0.3")
+
+def test_precision_zero_rounds_to_whole_number():
+    calc = Calculator(precision=0)
+    assert calc.calculate("/", 7, 2) == Decimal("4")
+
+def test_short_results_not_padded():
+    calc = Calculator(precision=6)
+    result = calc.calculate("add", 2, 3)
+    assert str(result) == "5"
+
+def test_no_rounding_when_precision_not_set():
+    result = Calculator().calculate("/", 1, 3)
+    assert result == Decimal(1) / Decimal(3)
+
+def test_float_inputs_no_binary_error():
+    result = Calculator().calculate("add", 0.1, 0.2)
+    assert result == Decimal("0.3")
+
+def test_inputs_and_results_stored_as_decimals():
+    calc = Calculator()
+    calc.calculate("add", 2, 3)
+    entry = calc.history[0]
+    for value in (entry.operand_a, entry.operand_b, entry.result):
+        assert isinstance(value, Decimal)
+
+def test_negative_precision_is_rejected():
+    with pytest.raises(ConfigurationError):
+        Calculator(precision=-1)
+        
+                             
 
 
 

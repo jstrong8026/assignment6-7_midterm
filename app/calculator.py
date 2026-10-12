@@ -2,13 +2,17 @@ from app.calculation import Calculation
 from app.calculator_memento import CalculatorMemento
 from app.exceptions import OperationError, ConfigurationError
 from app.operations import OperationFactory
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
 
 class Calculator:
-    def __init__(self, max_history_size: int | None = None):
+    def __init__(self, max_history_size: int | None = None, precision: int | None = None):
         if max_history_size is not None and max_history_size < 1:
             raise ConfigurationError("max_history_size must be at least 1")
+        if precision is not None and precision < 0:
+            raise ConfigurationError("precision cannot be negative")
         self.max_history_size = max_history_size
+        self.precision = precision
         self.history = []
         self._undo_stack = []
         self._redo_stack = []
@@ -34,7 +38,8 @@ class Calculator:
 
     def calculate(self, operation_name, a, b):
         operation = OperationFactory.create(operation_name)
-        result = operation.calculate(a, b)
+        a, b = Decimal(str(a)), Decimal(str(b))
+        result = self._apply_precision(operation.calculate(a, b))
         calculation = Calculation(operation.names[0], a, b, result)
         self._undo_stack.append(self._snapshot())
         self._redo_stack.clear()
@@ -71,3 +76,16 @@ class Calculator:
             return
         while len(self.history) > self.max_history_size:
             self.history.pop(0)
+
+    def _apply_precision(self, value):
+        if self.precision is None:
+            return value
+        if value.as_tuple().exponent >= -self.precision:
+            return value
+        step = Decimal(10) ** -self.precision
+        try:
+            return value.quantize(step, rounding=ROUND_HALF_UP)
+        except InvalidOperation:
+            raise OperationError(
+                "Result is too large - can't round to the configured precision"
+            ) from None
