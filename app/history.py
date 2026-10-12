@@ -31,21 +31,25 @@ class LoggingObserver(HistoryObserver):
 class AutoSaveObserver(HistoryObserver):
     """Saves the full history to a csv file after each calculation"""
 
-    def __init__(self, calculator, file_path="history/calculator_history.csv"):
+    def __init__(self, calculator, file_path: str | Path = "history/calculator_history.csv", encoding: str = "utf-8"):
         self.calculator = calculator
         self.file_path = file_path
+        self.encoding = encoding
+
+    def _save(self):
+        save_history(self.calculator.history, self.file_path, self.encoding)
 
     def update(self, calculation: Calculation) -> None:
-        save_history(self.calculator.history, self.file_path)
+        self._save()
 
     #this looks for changes in history to deal wtih clear, undo, etc.
     def history_changed(self) -> None:
-        save_history(self.calculator.history, self.file_path)
+        self._save()
 
 #adding the pandas save history option
 COLUMNS = ["operation", "operand_a", "operand_b", "result", "timestamp"]
 
-def save_history(history, file_path):
+def save_history(history, file_path, encoding="utf-8"):
     Path(file_path).parent.mkdir(parents=True, exist_ok=True)
     rows = [calculation.to_dict() for calculation in history]
-    pd.DataFrame(rows, columns=COLUMNS) .to_csv(file_path, index=False)
+    pd.DataFrame(rows, columns=COLUMNS) .to_csv(file_path, index=False, encoding=encoding)
