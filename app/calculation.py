@@ -1,7 +1,17 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
+from app.exceptions import ValidationError
 
+def _to_decimal(value):
+    try:
+        number = Decimal(str(value))
+    except InvalidOperation:
+        raise ValidationError(f"'{value}' is not a valid number") from None
+    if not number.is_finite():
+        raise ValidationError(f"'{value}' is not a valid number")
+    return number
+    
 @dataclass(frozen=True)
 class Calculation:
     operation: str
@@ -21,10 +31,16 @@ class Calculation:
 
     @classmethod
     def from_dict(cls, data):
-        return cls(
-            operation=data["operation"],
-            operand_a=data["operand_a"],
-            operand_b=data["operand_b"],
-            result=data["result"],
-            timestamp=datetime.fromisoformat(data["timestamp"]),    
+        try:
+            return cls(
+                operation=str(data["operation"]),
+                operand_a=_to_decimal(data["operand_a"]),
+                operand_b=_to_decimal(data["operand_b"]),
+                result=_to_decimal(data["result"]),
+                timestamp=datetime.fromisoformat(data["timestamp"]), 
         )
+        except KeyError as error:
+            raise ValidationError(f"Missing field {error}") from None
+        except (TypeError, ValueError):
+            raise ValidationError("Invalid timestamp") from None
+        

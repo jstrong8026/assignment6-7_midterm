@@ -3,6 +3,8 @@ import logging
 from pathlib import Path
 from abc import ABC, abstractmethod
 from app.calculation import Calculation
+from app.exceptions import OperationError, ValidationError
+from app.operations import OperationFactory
 
 class HistoryObserver(ABC):
     """this class is for anything that needs to be told when a calculation is recorded"""
@@ -53,3 +55,27 @@ def save_history(history, file_path, encoding="utf-8"):
     Path(file_path).parent.mkdir(parents=True, exist_ok=True)
     rows = [calculation.to_dict() for calculation in history]
     pd.DataFrame(rows, columns=COLUMNS) .to_csv(file_path, index=False, encoding=encoding)
+
+
+def load_history(file_path, encoding="utf-8"):
+    path = Path(file_path)
+    if not path.exists():
+        raise OperationError(f"History file not found: {path}")
+
+    try:
+        table = pd.read_csv(path, dtype=str, keep_default_na=False, encoding=encoding)
+    except (OSError, UnicodeDecodeError, pd.errors.ParserError, pd.errors.EmptyDataError):
+            raise OperationError(f"History file could not be read: {path}") from None
+
+    missing = [column for column in COLUMNS if column not in table.columns]
+    if missing:
+        raise OperationError(f"History file is missing columns: {', '.join(missing)}")
+
+    history = []
+    for row_number, row in enumerate(table.to_dict("records"), start=2):
+        try:
+            OperationFactory.create(row["operation"])
+            history.append(Calculation.from_dict(row))
+        except ValidationError as error:
+            raise OperationError(f"History file row {row_number} is invalid: {error}") from None
+    return history    
