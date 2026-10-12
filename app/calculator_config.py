@@ -1,10 +1,9 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
-
 from dotenv import load_dotenv
-
 from app.exceptions import ConfigurationError
+from decimal import Decimal, InvalidOperation
 
 def _get_int(values, name, default):
     raw = values.get(name)
@@ -15,14 +14,18 @@ def _get_int(values, name, default):
     except ValueError:
         raise ConfigurationError(f"{name} must be a whole number, but got '{raw}'") from None
 
-def _get_float(values, name, default):
+def _get_decimal(values, name, default):
     raw = values.get(name)
     if raw is None:
         return default
     try: 
-        return float(raw)
-    except ValueError:
+        value = Decimal(raw)
+    except InvalidOperation:
         raise ConfigurationError(f"{name} must be a number, but got '{raw}'") from None
+    if not value.is_finite():
+        raise ConfigurationError(f"{name} must be a number, but got '{raw}'")
+    return value
+
 
 def _get_bool(values, name, default): 
     raw = values.get(name)
@@ -45,7 +48,7 @@ class CalculatorConfig:
     max_history_size: int = 100
     auto_save: bool = True
     precision: int = 2
-    max_input_value: float = 1_000_000
+    max_input_value: Decimal = Decimal("1000000")
     default_encoding: str = "utf-8"
 
     @property
@@ -71,7 +74,7 @@ class CalculatorConfig:
             max_history_size=_get_int(values, "CALCULATOR_MAX_HISTORY_SIZE", 100), 
             auto_save=_get_bool(values, "CALCULATOR_AUTO_SAVE", True),
             precision=_get_int(values, "CALCULATOR_PRECISION", 2),
-            max_input_value=_get_float(values, "CALCULATOR_MAX_INPUT_VALUE", 1_000_000),
+            max_input_value=_get_decimal(values, "CALCULATOR_MAX_INPUT_VALUE", Decimal("1000000")),
             default_encoding=values.get("CALCULATOR_DEFAULT_ENCODING", "utf-8"),
         )
         config.validate()

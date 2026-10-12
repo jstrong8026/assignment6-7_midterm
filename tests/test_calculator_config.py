@@ -1,9 +1,8 @@
-from pathlib import Path
-
 import pytest
-
+from pathlib import Path
 from app.calculator_config import CalculatorConfig
 from app.exceptions import ConfigurationError
+from decimal import Decimal
 
 def test_defaults_when_nothing_is_set():
     config = CalculatorConfig.from_mapping({})
@@ -27,7 +26,7 @@ def test_values_are_read_and_converted():
     assert config.max_history_size == 25
     assert config.auto_save is False
     assert config.precision == 9
-    assert config.max_input_value == 500
+    assert config.max_input_value == Decimal("500")
 
 @pytest.mark.parametrize("name, value", [
     ("CALCULATOR_MAX_HISTORY_SIZE", "lots"),
@@ -35,6 +34,7 @@ def test_values_are_read_and_converted():
     ("CALCULATOR_PRECISION", "-1"),
     ("CALCULATOR_MAX_INPUT_VALUE", "abc"),
     ("CALCULATOR_MAX_INPUT_VALUE", "0"),
+    ("CALCULATOR_MAX_INPUT_VALUE", "nan"),
     ("CALCULATOR_AUTO_SAVE", "maybe"), 
     ("CALCULATOR_DEFAULT_ENCODING", ".mp4"),
 
