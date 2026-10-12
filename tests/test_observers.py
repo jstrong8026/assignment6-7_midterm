@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 from app.calculator import Calculator
 from app.history import HistoryObserver, LoggingObserver, AutoSaveObserver, save_history
-from app.exceptions import OperationError
+from app.exceptions import OperationError, ConfigurationError
 
 
 class RecordingObserver(HistoryObserver):
@@ -190,4 +190,17 @@ def test_autosave_file_follows_undo_redo_clear(tmp_path):
     assert len(pd.read_csv(csv_file)) == 0
 
     calc.undo()
+    assert len(pd.read_csv(csv_file)) == 2
+
+
+#testing autosave respects the history row limit
+def test_autosave_never_writes_more_rows_than_limit(tmp_path):
+    csv_file = tmp_path / "history.csv"
+    calc = Calculator(max_history_size=2)
+    calc.register_observer(AutoSaveObserver(calc, csv_file))
+
+    calc.calculate("add", 1, 1)
+    calc.calculate("add", 2, 2)
+    calc.calculate("add", 3, 3)
+
     assert len(pd.read_csv(csv_file)) == 2

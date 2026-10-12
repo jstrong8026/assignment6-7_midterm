@@ -1,6 +1,6 @@
 import pytest
 from app.calculator import Calculator
-from app.exceptions import OperationError, ValidationError
+from app.exceptions import OperationError, ValidationError, ConfigurationError
 
 def test_calculate_resturns_the_expected_result():
     assert Calculator().calculate("+", 2, 3) == 5
@@ -90,6 +90,38 @@ def test_clearing_empty_history_crates_no_undo_step():
 
     with pytest.raises(OperationError, match="Nothing to undo - you can't undo what was never done!"):
         calc.undo()
+
+def test_history_is_capped_at_max_size():
+    calc = Calculator(max_history_size=2)
+    calc.calculate("add", 1, 1)
+    calc.calculate("add", 2, 2)
+    calc.calculate("add", 3, 3)
+
+    assert [entry.result for entry in calc.history] == [4, 6]
+
+def test_no_limit_by_default():
+    calc = Calculator()
+    for number in range(150):
+        calc.calculate("add", number, 1)
+
+    assert len(calc.history) == 150
+
+def test_undo_restores_dropped_entry():
+    calc = Calculator(max_history_size=2)
+    calc.calculate("add", 1, 1)
+    calc.calculate("add", 2, 2)
+    calc.calculate("add", 3, 3)
+
+    calc.undo()
+
+    assert [entry.result for entry in calc.history] == [2, 4]
+
+@pytest.mark.parametrize("bad_size", [0, -1])
+def test_invalid_max_history_size_rejected(bad_size):
+    with pytest.raises(ConfigurationError):
+        Calculator(max_history_size=bad_size)
+
+
 
 
 

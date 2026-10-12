@@ -1,10 +1,14 @@
 from app.calculation import Calculation
 from app.calculator_memento import CalculatorMemento
-from app.exceptions import OperationError
+from app.exceptions import OperationError, ConfigurationError
 from app.operations import OperationFactory
 
+
 class Calculator:
-    def __init__(self):
+    def __init__(self, max_history_size: int | None = None):
+        if max_history_size is not None and max_history_size < 1:
+            raise ConfigurationError("max_history_size must be at least 1")
+        self.max_history_size = max_history_size
         self.history = []
         self._undo_stack = []
         self._redo_stack = []
@@ -35,6 +39,7 @@ class Calculator:
         self._undo_stack.append(self._snapshot())
         self._redo_stack.clear()
         self.history.append(calculation)
+        self._trim_history()
         self._notify(calculation)
         return result
 
@@ -59,3 +64,10 @@ class Calculator:
         self._redo_stack.clear()
         self.history = []
         self._notify_history_changed()
+
+    #this is a helper to enforce max history
+    def _trim_history(self):
+        if self.max_history_size is None:
+            return
+        while len(self.history) > self.max_history_size:
+            self.history.pop(0)
