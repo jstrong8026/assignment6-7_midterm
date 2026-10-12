@@ -2,7 +2,7 @@ from app.calculation import Calculation
 from app.calculator_memento import CalculatorMemento
 from app.exceptions import OperationError, ConfigurationError
 from app.operations import OperationFactory
-from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+from decimal import ROUND_HALF_UP, Decimal, Overflow
 
 
 class Calculator:
@@ -39,7 +39,11 @@ class Calculator:
     def calculate(self, operation_name, a, b):
         operation = OperationFactory.create(operation_name)
         a, b = Decimal(str(a)), Decimal(str(b))
-        result = self._apply_precision(operation.calculate(a, b))
+        try:
+            raw_result = operation.calculate(a, b)
+        except Overflow:
+            raise OperationError("That result is way too large to show - try a calculation with a smaller answer.") from None
+        result = self._apply_precision(raw_result)
         calculation = Calculation(operation.names[0], a, b, result)
         self._undo_stack.append(self._snapshot())
         self._redo_stack.clear()
@@ -83,9 +87,5 @@ class Calculator:
         if value.as_tuple().exponent >= -self.precision:
             return value
         step = Decimal(10) ** -self.precision
-        try:
-            return value.quantize(step, rounding=ROUND_HALF_UP)
-        except InvalidOperation:
-            raise OperationError(
-                "Result is too large - can't round to the configured precision"
-            ) from None
+        return value.quantize(step, rounding=ROUND_HALF_UP)
+    

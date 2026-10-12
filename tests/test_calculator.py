@@ -158,7 +158,25 @@ def test_inputs_and_results_stored_as_decimals():
 def test_negative_precision_is_rejected():
     with pytest.raises(ConfigurationError):
         Calculator(precision=-1)
-        
+
+#testing for ridiculously large results that throw errors
+@pytest.mark.parametrize("operation, a, b", [
+    ("^", 10, 5_000_000),
+    ("/", 1_000_000, Decimal("1E-999999")),
+])
+def test_result_too_large_raises_operation_error(operation, a, b):
+    calc = Calculator()
+
+    with pytest.raises(OperationError, match="too large"):
+        calc.calculate(operation, a, b)
+    assert calc.history == []
+    with pytest.raises(OperationError, match="Nothing to undo"):
+        calc.undo()
+
+def test_large_but_within_limits_results_still_work():
+    result = Calculator().calculate("^", 10, 100)
+    assert result == Decimal(10) ** 100
+    
                              
 
 
