@@ -1,7 +1,7 @@
 import pytest
 from decimal import Decimal
 from typing import Any, Dict, Type
-
+from decimal import Decimal
 from app.operations import OperationFactory, Operation
 from app import operations
 from app.exceptions import OperationError
@@ -93,3 +93,27 @@ def test_subclass_must_define_calculate():
     with pytest.raises(TypeError):
         Incomplete() # type: ignore
         #I am ignoring the error because this test is intentionally trying something that isn't possible
+
+
+@pytest.mark.parametrize("a, b, message", [
+    (0, 0, "power of 0"),
+    (0, -1, "negative power"),
+    (-8, Decimal("0.5"), "fractional power"),
+
+])
+def test_power_rejects_undefined_cases(a, b, message):
+    with pytest.raises(OperationError, match=message):
+        OperationFactory.create("^").calculate(a, b)
+
+
+@pytest.mark.parametrize ("a, b, expected", [
+    ("2", "10", "1024"), 
+    ("2", "-2", "0.25"),
+    ("-2", "3", "-8"), 
+    ("-2", "2", "4"),
+    ("-8", "2.0", "64"),
+    ("5", "0", "1"),
+])
+def test_power_valid_edge_case(a, b, expected):
+    result = OperationFactory.create("^").calculate(Decimal(a), Decimal(b))
+    assert result == Decimal(expected)

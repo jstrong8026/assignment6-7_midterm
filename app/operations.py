@@ -51,6 +51,12 @@ class Power(Operation):
     names = ("power", "^")
     description = "Raises the first number to the power of the second number."
     def calculate(self, a, b):
+        if a == 0 and b == 0:
+            raise OperationError("Don't be cheeky - you can't raise 0 to the power of 0")
+        if a == 0 and b < 0:
+            raise OperationError("You know the rules - you can't riase 0 to a negative power")
+        if a < 0 and b % 1 != 0:
+            raise OperationError("What's this?! You can't raise a negaive number to a fractional power")
         return a ** b
 
 class Root(Operation): 
