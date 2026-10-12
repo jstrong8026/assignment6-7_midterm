@@ -2,7 +2,7 @@ from app.calculation import Calculation
 from app.calculator_memento import CalculatorMemento
 from app.exceptions import OperationError, ConfigurationError
 from app.operations import OperationFactory
-from decimal import ROUND_HALF_UP, Decimal, Overflow
+from decimal import ROUND_HALF_UP, Decimal, DecimalException, Overflow
 
 
 class Calculator:
@@ -43,6 +43,13 @@ class Calculator:
             raw_result = operation.calculate(a, b)
         except Overflow:
             raise OperationError("That result is way too large to show - try a calculation with a smaller answer.") from None
+        except DecimalException:
+            raise OperationError("Halt! This operation cannot be performed with those values") from None
+
+        if not raw_result.is_finite():
+            raise OperationError("Result is not a finite number - I don't go to infinity nor beyond")
+        if raw_result == 0:
+            raw_result = Decimal(0)
         result = self._apply_precision(raw_result)
         calculation = Calculation(operation.names[0], a, b, result)
         self._undo_stack.append(self._snapshot())

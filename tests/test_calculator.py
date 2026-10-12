@@ -176,8 +176,35 @@ def test_result_too_large_raises_operation_error(operation, a, b):
 def test_large_but_within_limits_results_still_work():
     result = Calculator().calculate("^", 10, 100)
     assert result == Decimal(10) ** 100
-    
-                             
+
+
+#testing for more fringe cases
+@pytest.mark.parametrize("operation, a, b, message", [
+    ("//", 1_000_000, Decimal("1E-30"), "cannot be performed"),
+    ("root", 0, -2, "not a finite"),
+])
+def test_decimal_edge_case_operation_errors(operation, a, b, message):
+    calc = Calculator()
+
+    with pytest.raises(OperationError, match=message):
+        calc.calculate(operation, a, b)
+
+    assert calc.history == []
+
+def test_negative_zero_stored_as_plain_zero():
+    result = Calculator().calculate("*", 0, -5)
+    assert str(result) == "0"
+
+@pytest.mark.parametrize("operation, a, b, expected", [
+    ("//", 7, 2, 3),
+    ("//", -7, 2, -3),
+    ("//", 7, -2, -3),
+    ("mod", 7, 3, 1),
+    ("mod", -7, 3, -1),
+    ("mod", 7, -3, 1),
+])
+def test_int_division_and_mod_with_negatives(operation, a, b, expected):
+    assert Calculator().calculate(operation, a, b) == expected
 
 
 
