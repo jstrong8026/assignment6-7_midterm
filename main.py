@@ -1,48 +1,31 @@
-from app.operations import OperationFactory
-from app.input_validation import parse_number
-from app.helper_text import get_helper_text
-from app.exceptions import CalculatorError
+from app.calculator import Calculator
+from app.calculator_config import CalculatorConfig
+from app.calculator_repl import CalculatorREPL
+from app.exceptions import ConfigurationError
+from app.history import AutoSaveObserver, LoggingObserver
+from app.logger import setup_logging
 
-#allows users to input 'help' or 'exit' commands
-def ask(prompt):
-    while True:
-        text=input(prompt).strip()
-        if text.lower() in ("exit", "'exit'"):
-            return None
-        if text.lower() in ("help", "'help'"):
-            print(get_helper_text())
-            continue
-        return text
 
 def main():
-    while True: #because I put 'while true' here, the welcome and prompt for first number will appear a calculation is completed
-        print("Welcome to Joe's REPL calculator-o-matic 5000! \n Type 'help' for instructions or type 'exit' to quit.")
+    try:
+        config = CalculatorConfig.from_env()
+    except ConfigurationError as error:
+        print(f"Configuration error: {error}")
+        return
 
-        first = ask("Enter the first number: ")
-        if first is None:
-            break
-        
-        symbol = ask("Enter the mathematical operation (ie: + or Multiply): ")
-        if symbol is None:
-            break
-        
-        second = ask("Enter the second number: ")
-        if second is None:
-            break
+    setup_logging(config.log_path, config.default_encoding)
 
-        try:
-            a = parse_number(first)
-            b = parse_number(second)
-            operation = OperationFactory.create(symbol)
-            print() #adding a blank space to make it easier to see the result
-            print("Result:", operation.calculate(a, b))
-        except CalculatorError as error:
-            print("Error:", error)
-   
+    calculator = Calculator(
+        max_history_size=config.max_history_size,
+        precision=config.precision,
+    )
+    calculator.register_observer(LoggingObserver())
+    if config.auto_save:
+        calculator.register_observer(
+            AutoSaveObserver(calculator, config.history_path, config.default_encoding)
+        )
 
-        print() #this is just a line break to make the output look nicer
-
-    print("Thanks for using Joe's REPL calculator-o-matic 5000! Goodbye!")
+    CalculatorREPL(calculator, max_input_value=config.max_input_value).run()
 
 if __name__ == "__main__":
     main()
