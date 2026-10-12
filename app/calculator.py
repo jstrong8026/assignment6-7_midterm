@@ -3,7 +3,8 @@ from app.calculator_memento import CalculatorMemento
 from app.exceptions import OperationError, ConfigurationError
 from app.operations import OperationFactory
 from decimal import ROUND_HALF_UP, Decimal, DecimalException, Overflow
-
+from app.history import load_history, save_history
+from pathlib import Path
 
 class Calculator:
     def __init__(self, max_history_size: int | None = None, precision: int | None = None):
@@ -95,4 +96,16 @@ class Calculator:
             return value
         step = Decimal(10) ** -self.precision
         return value.quantize(step, rounding=ROUND_HALF_UP)
-    
+
+    def save(self, file_path: str | Path, encoding: str = "utf-8"):
+        save_history(self.history, file_path, encoding)
+
+    def load(self, file_path: str | Path, encoding: str = "utf-8"):
+        loaded = load_history(file_path, encoding)
+        if loaded == self.history:
+            return
+        self._undo_stack.append(self._snapshot())
+        self._redo_stack.clear()
+        self.history = loaded
+        self._trim_history()
+        self._notify_history_changed()

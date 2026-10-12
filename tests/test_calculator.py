@@ -207,4 +207,60 @@ def test_int_division_and_mod_with_negatives(operation, a, b, expected):
     assert Calculator().calculate(operation, a, b) == expected
 
 
+def test_load_replaces_the_history(tmp_path):
+    csv_file = tmp_path / "history.csv"
+    source = Calculator()
+    source.calculate("add", 2, 3)
+    source.save(csv_file)
+
+    calc = Calculator()
+    calc.calculate("multiply", 4, 5)
+    calc.load(csv_file)
+
+    assert [entry.result for entry in calc.history] == [5]
+
+def test_load_can_be_undone(tmp_path):
+    csv_file = tmp_path / "history.csv"
+    source = Calculator()
+    source.calculate("add", 2, 3)
+    source.save(csv_file)
+
+    calc = Calculator()
+    calc.calculate("multiply", 4, 5)
+    calc.load(csv_file)
+    calc.undo()
+
+    assert [entry.result for entry in calc.history] == [20]
+
+def test_failed_load_changes_nothing(tmp_path):
+    calc = Calculator()
+    calc.calculate("add", 2, 3)
+    before = list(calc.history)
+
+    with pytest.raises(OperationError):
+        calc.load(tmp_path / "nope.csv")
+
+    assert calc.history == before
+
+def test_load_respects_max_history(tmp_path):
+    csv_file = tmp_path / "history.csv"
+    source = Calculator()
+    for number in (1, 2, 3):
+        source.calculate("add", number, number)
+    source.save(csv_file)
+
+    calc = Calculator(max_history_size=2)
+    calc.load(csv_file)
+
+    assert [entry.result for entry in calc.history] == [4, 6]
+
+def test_loading_identical_history_creates_no_undo(tmp_path):
+    csv_file = tmp_path / "history.csv"
+    calc = Calculator()
+    calc.save(csv_file)
+
+    calc.load(csv_file)
+
+    with pytest.raises(OperationError, match="Nothing to undo"):
+        calc.undo()
 
