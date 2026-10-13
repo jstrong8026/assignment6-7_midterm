@@ -35,13 +35,19 @@ class LoggingObserver(HistoryObserver):
 class AutoSaveObserver(HistoryObserver):
     """Saves the full history to a csv file after each calculation"""
 
-    def __init__(self, calculator, file_path: str | Path = "history/calculator_history.csv", encoding: str = "utf-8"):
+    def __init__(self, calculator, file_path: str | Path = "history/calculator_history.csv", encoding: str = "utf-8", logger=None):
         self.calculator = calculator
         self.file_path = file_path
         self.encoding = encoding
+        self.logger = logger
 
     def _save(self):
-        save_history(self.calculator.history, self.file_path, self.encoding)
+        try:
+            save_history(self.calculator.history, self.file_path, self.encoding)
+        except OperationError as error:
+            if self.logger is None:
+                raise
+            self.logger.error("Auto-save failed: %s", error)
 
     def update(self, calculation: Calculation) -> None:
         self._save()
@@ -54,10 +60,15 @@ class AutoSaveObserver(HistoryObserver):
 COLUMNS = ["operation", "operand_a", "operand_b", "result", "timestamp"]
 
 def save_history(history, file_path, encoding="utf-8"):
-    Path(file_path).parent.mkdir(parents=True, exist_ok=True)
+    path = Path(file_path)
     rows = [calculation.to_dict() for calculation in history]
-    pd.DataFrame(rows, columns=COLUMNS) .to_csv(file_path, index=False, encoding=encoding)
-
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(rows, columns=COLUMNS) .to_csv(file_path, index=False, encoding=encoding)
+    except OSError as error:
+        raise OperationError(
+            f"History file could not be written: {path} ({error.strerror or 'unknown error'})"
+        ) from None
 
 def load_history(file_path, encoding="utf-8"):
     path = Path(file_path)

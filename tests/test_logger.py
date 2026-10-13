@@ -4,6 +4,7 @@ import pytest
 
 from app.calculator_config import CalculatorConfig
 from app.logger import Logger
+from app.exceptions import ConfigurationError
 
 
 @pytest.fixture
@@ -59,4 +60,10 @@ def test_logger_writes_to_the_path_from_config(tmp_path):
         log.close()
 
     assert "hello log" in config.log_path.read_text(encoding="utf-8")
-    
+
+def test_unusable_log_location_raises_configuration_error(tmp_path):
+    blocker = tmp_path / "blocker"
+    blocker.write_text("I am a file, not a folder")
+
+    with pytest.raises(ConfigurationError, match="Cannot open log file"):
+        Logger(blocker / "app.log")    
