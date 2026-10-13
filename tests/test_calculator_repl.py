@@ -220,3 +220,13 @@ def test_end_of_input_in_the_middle_of_a_calculation_exits_cleanly():
     repl, output = make_repl(["add", "2"])
     repl.run()
     assert output[-1] == "Goodbye - thank you for doing math with me!"
+
+def test_save_failure_is_reported_not_raised(tmp_path):
+    blocker = tmp_path / "blocker"
+    blocker.write_text("I am a file, not a folder")
+    repl, output = make_repl(["save", "exit"], history_path=blocker / "history.csv")
+
+    repl.run()
+
+    assert any("could not be written" in line for line in output)
+    assert output[-1] == "Goodbye - thank you for doing math with me!"

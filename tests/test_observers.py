@@ -208,3 +208,40 @@ def test_autosave_never_writes_more_rows_than_limit(tmp_path):
     calc.calculate("add", 3, 3)
 
     assert len(pd.read_csv(csv_file)) == 2
+
+#testing obscure log errors
+def make_unwritable_path(tmp_path):
+    """A path that can't be written because its parent 'folder' is really a file."""
+    blocker = tmp_path / "blocker"
+    blocker.write_text("I am a file, not a folder")
+    return blocker / "history.csv"
+
+
+def test_save_history_to_an_unwritable_location_raises(tmp_path):
+    with pytest.raises(OperationError, match="could not be written"):
+        save_history([], make_unwritable_path(tmp_path))
+
+
+def test_auto_save_failure_is_logged_and_the_calculation_still_completes(tmp_path):
+    logger = FakeLogger()
+    calc = Calculator()
+    calc.register_observer(
+        AutoSaveObserver(calc, make_unwritable_path(tmp_path), logger=logger)
+    )
+
+    result = calc.calculate("add", 2, 3)
+
+    assert result == 5
+    assert len(calc.history) == 1
+    assert any(
+        level == "ERROR" and "Auto-save failed" in message
+        for level, message in logger.records
+    )
+
+
+def test_auto_save_failure_without_a_logger_is_not_hidden(tmp_path):
+    calc = Calculator()
+    calc.register_observer(AutoSaveObserver(calc, make_unwritable_path(tmp_path)))
+
+    with pytest.raises(OperationError):
+        calc.calculate("add", 2, 3)

@@ -9,11 +9,10 @@ from app.logger import Logger
 def main():
     try:
         config = CalculatorConfig.from_env()
+        logger = Logger(config.log_path, config.default_encoding)
     except ConfigurationError as error:
         print(f"Configuration error: {error}")
         return
-
-    logger = Logger(config.log_path, config.default_encoding)
 
     calculator = Calculator(
         max_history_size=config.max_history_size,
@@ -22,7 +21,7 @@ def main():
     calculator.register_observer(LoggingObserver(logger))
     if config.auto_save:
         calculator.register_observer(
-            AutoSaveObserver(calculator, config.history_path, config.default_encoding)
+            AutoSaveObserver(calculator, config.history_path, config.default_encoding, logger=logger)
         )
     try:
         CalculatorREPL(
