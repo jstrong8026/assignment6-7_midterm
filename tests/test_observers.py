@@ -2,9 +2,9 @@ import pytest
 import logging
 import pandas as pd
 from app.calculator import Calculator
-from app.history import HistoryObserver, LoggingObserver, AutoSaveObserver, save_history
+from app.history import HistoryObserver, AutoSaveObserver, LoggingObserver, save_history
 from app.exceptions import OperationError, ConfigurationError
-
+from tests.fakes import FakeLogger
 
 class RecordingObserver(HistoryObserver):
     def __init__(self):
@@ -72,28 +72,32 @@ def test_history_observer_cannot_be_created_directly():
         HistoryObserver() # pyright: ignore[reportAbstractUsage]
         #ignoring this warning as it's expected
 
+
 #checking observer is logging messages
-def test_logging_observer_logs_each_calculation(caplog):
+def test_logging_observer_logs_each_calculation():
+    logger = FakeLogger()
     calc = Calculator()
-    calc.register_observer(LoggingObserver())
+    calc.register_observer(LoggingObserver(logger))
 
-    with caplog.at_level(logging.INFO,logger="calculator"):
-        calc.calculate("add", 2, 3)
+    calc.calculate("add", 2, 3)
 
-    assert len(caplog.records) == 1
-    message = caplog.records[0].getMessage()
+    assert len(logger.records) == 1
+    level, message = logger.records[0]
+    assert level == "INFO"
     assert "add" in message
     assert "5" in message
 
-def test_logging_observer_ignores_failed_calculations(caplog):
+
+def test_logging_observer_ignores_failed_calculations():
+    logger = FakeLogger()
     calc = Calculator()
-    calc.register_observer(LoggingObserver())
+    calc.register_observer(LoggingObserver(logger))
 
-    with caplog.at_level(logging.INFO, logger="calculator"):
-        with pytest.raises(Exception):
-            calc.calculate("/", 1, 0)
+    with pytest.raises(Exception):
+        calc.calculate("/", 1, 0)
 
-    assert caplog.records == []
+    assert logger.records == []
+
 
 #creating tests for pandas to create csv file
 def test_auto_save_writes_csv_after_calculation(tmp_path):
