@@ -1,5 +1,4 @@
 import pandas as pd
-import logging
 from pathlib import Path
 from abc import ABC, abstractmethod
 from app.calculation import Calculation
@@ -21,8 +20,11 @@ class HistoryObserver(ABC):
 class LoggingObserver(HistoryObserver):
     """writes a log line for every calculatin"""
 
+    def __init__(self, logger):
+        self.logger = logger
+    
     def update(self, calculation: Calculation) -> None:
-        logging.getLogger("calculator").info(
+        self.logger.info(
             "Calculation: %s %s %s = %s",
             calculation.operand_a,
             calculation.operation, 
