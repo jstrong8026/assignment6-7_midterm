@@ -4,20 +4,25 @@ from app.calculator import Calculator
 from app.calculator_repl import CalculatorREPL
 from app.operations import OperationFactory
 from app.helper_text import get_helper_text
+from tests.fakes import FakeLogger
 
-def make_repl(inputs, calculator=None, **kwargs):
+def make_repl(inputs, calculator=None, logger=None, **kwargs):
     """Build a REPL that 'types' the given lines and records what it prints."""
     outputs = []
     feed = iter(inputs)
 
     def fake_input(prompt=""):
         try:
-            return next(feed)
+            value = next(feed)
         except StopIteration:
             raise EOFError from None
+        if isinstance(value, BaseException):
+            raise value 
+        return value 
     
     repl = CalculatorREPL(
         calculator or Calculator(),
+        logger or FakeLogger(),
         input_fn=fake_input,
         output_fn=outputs.append,
         **kwargs,
@@ -169,3 +174,49 @@ def test_help_mentions_every_repl_command():
     text = get_helper_text().lower()
     for name in list(repl._commands) + ["exit"]:
         assert name in text
+
+#adding new tests for logs
+class BrokenCalculator(Calculator):
+    def calculate(self, operation_name, a, b):
+        raise RuntimeError("boom")
+
+
+def _messages(repl, level):
+    return [message for lvl, message in repl.logger.records if lvl == level]
+
+
+def test_start_stop_and_commands_are_logged_at_info():
+    repl, _ = make_repl(["history", "exit"])
+    repl.run()
+    info = _messages(repl, "INFO")
+    assert "Calculator started" in info
+    assert "Command: history" in info
+    assert "Calculator stopped" in info
+
+
+def test_failed_commands_are_logged_as_warnings():
+    repl, _ = make_repl(["undo", "exit"])
+    repl.run()
+    assert any("Nothing to undo" in message for message in _messages(repl, "WARNING"))
+
+
+def test_unexpected_errors_are_logged_as_errors_and_the_loop_continues():
+    repl, output = make_repl(["add", "1", "1", "exit"], BrokenCalculator())
+    repl.run()
+    assert any("Unexpected error" in line for line in output)
+    assert any("add" in message for message in _messages(repl, "ERROR"))
+    assert output[-1] == "Goodbye - thank you for doing math with me!"
+
+
+def test_interrupt_in_the_middle_of_a_calculation_exits_cleanly():
+    calc = Calculator()
+    repl, output = make_repl(["add", KeyboardInterrupt()], calc)
+    repl.run()
+    assert output[-1] == "Goodbye - thank you for doing math with me!"
+    assert calc.history == []
+
+
+def test_end_of_input_in_the_middle_of_a_calculation_exits_cleanly():
+    repl, output = make_repl(["add", "2"])
+    repl.run()
+    assert output[-1] == "Goodbye - thank you for doing math with me!"

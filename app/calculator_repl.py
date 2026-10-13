@@ -4,8 +4,9 @@ from app.input_validation import parse_number
 from app.operations import OperationFactory
 
 class CalculatorREPL:
-    def __init__(self, calculator, max_input_value=None, history_path=None, encoding="utf-8", input_fn=input, output_fn=print):
+    def __init__(self, calculator, logger, max_input_value=None, history_path=None, encoding="utf-8", input_fn=input, output_fn=print):
         self.calculator = calculator
+        self.logger = logger
         self.max_input_value = max_input_value
         self.history_path = history_path
         self.encoding = encoding
@@ -22,26 +23,35 @@ class CalculatorREPL:
         }
     
     def run(self):
+        self.logger.info("Calculator started")
         self._output("Welcome to Joe's REPL calculator-o-matic 5000! \n Type 'help' for instructions or type 'exit' to quit.")
-        while True:
-            try:
-                command = self._input("Enter calculation command> ").strip().lower()
-            except (EOFError, KeyboardInterrupt):
-                self._output("")
-                break
+        try:
+            self._loop()
+        except (EOFError, KeyboardInterrupt):
+            self._output("")
+        self.logger.info("Calculator stopped")
+        self._output("Goodbye - thank you for doing math with me!")
 
+    def _loop(self):
+        while True:
+            command = self._input("Enter calculation command>").strip().lower()
             if command == "exit":
-                break
+                return
             if not command:
                 continue
 
+            self.logger.info("Command: %s", command)
             try:
                 self._handle(command)
             except CalculatorError as error:
+                self.logger.warning("Command '%s' failed: %s", command, error)
                 self._output(f"Error: {error}")
-        
-        self._output("Goodbye - thank you for doing math with me!") 
-
+            except (EOFError, KeyboardInterrupt):
+                raise
+            except Exception:
+                self.logger.error("Unexpected error in command '%s'", command, exc_info=True)
+                self._output("Unexpected error. Details were written to the log.")
+          
     
     def _handle(self, command):
         handler = self._commands.get(command)
