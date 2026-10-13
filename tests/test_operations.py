@@ -117,3 +117,15 @@ def test_power_rejects_undefined_cases(a, b, message):
 def test_power_valid_edge_case(a, b, expected):
     result = OperationFactory.create("^").calculate(Decimal(a), Decimal(b))
     assert result == Decimal(expected)
+
+@pytest.mark.parametrize("operation, a, b", [
+    ("divide", 1, 0),
+    ("int_divide", 1, 0),
+    ("modulus", 1, 0),
+    ("percent", 1, 0),
+    ("root", 4, 0),
+    ("root", -4, 2),
+])
+def test_invalid_operands_raise_operation_error(operation, a, b):
+    with pytest.raises(OperationError):
+        OperationFactory.create(operation).calculate(a, b)
