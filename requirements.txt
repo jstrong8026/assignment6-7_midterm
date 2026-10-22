@@ -1,4 +1,5 @@
 astroid==4.3.2
+colorama==0.4.6
 coverage==7.16.2
 dill==0.4.1
 exceptiongroup==1.2.1
