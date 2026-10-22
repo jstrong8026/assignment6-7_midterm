@@ -5,6 +5,8 @@ from app.calculator_repl import CalculatorREPL
 from app.operations import OperationFactory
 from app.helper_text import get_helper_text
 from tests.fakes import FakeLogger
+from colorama import Fore, Style
+from app.colors import Colorizer
 
 def make_repl(inputs, calculator=None, logger=None, **kwargs):
     """Build a REPL that 'types' the given lines and records what it prints."""
@@ -230,3 +232,16 @@ def test_save_failure_is_reported_not_raised(tmp_path):
 
     assert any("could not be written" in line for line in output)
     assert output[-1] == "Goodbye - thank you for doing math with me!"
+
+
+#testing colorizer add-on
+def test_colored_output_wraps_results_and_errors():
+    repl, output = make_repl(
+        ["add", "2", "3", "undo", "undo", "exit"], colors=Colorizer(enabled=True)
+    )
+    repl.run()
+
+    assert Fore.GREEN + "Result: 5" + Style.RESET_ALL in output
+    assert any(
+        line.startswith(Fore.RED) and "Nothing to undo" in line for line in output
+    )

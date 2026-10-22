@@ -1,17 +1,22 @@
+import os
 from app.calculator import Calculator
 from app.calculator_config import CalculatorConfig
 from app.calculator_repl import CalculatorREPL
 from app.exceptions import ConfigurationError
 from app.history import AutoSaveObserver, LoggingObserver
 from app.logger import Logger
+from colorama import init as init_colorama
+from app.colors import Colorizer
 
 
 def main():
+    init_colorama()
+    colors = Colorizer(enabled="NO_COLOR" not in os.environ)
     try:
         config = CalculatorConfig.from_env()
         logger = Logger(config.log_path, config.default_encoding)
     except ConfigurationError as error:
-        print(f"Configuration error: {error}")
+        print(colors.error(f"Configuration error: {error}"))
         return
 
     calculator = Calculator(
@@ -30,6 +35,7 @@ def main():
             max_input_value=config.max_input_value,
             history_path=config.history_path,
             encoding=config.default_encoding,
+            colors=colors,
         ).run()
 
     finally:

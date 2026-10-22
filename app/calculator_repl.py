@@ -2,9 +2,10 @@ from app.exceptions import CalculatorError, OperationError, ValidationError
 from app.helper_text import get_helper_text
 from app.input_validation import parse_number
 from app.operations import OperationFactory
+from app.colors import Colorizer
 
 class CalculatorREPL:
-    def __init__(self, calculator, logger, max_input_value=None, history_path=None, encoding="utf-8", input_fn=input, output_fn=print):
+    def __init__(self, calculator, logger, max_input_value=None, history_path=None, encoding="utf-8", input_fn=input, output_fn=print, colors=None):
         self.calculator = calculator
         self.logger = logger
         self.max_input_value = max_input_value
@@ -12,6 +13,7 @@ class CalculatorREPL:
         self.encoding = encoding
         self._input = input_fn
         self._output = output_fn
+        self.colors = colors or Colorizer(enabled=False)
         self._commands = {
             "history": self._show_history,
             "clear": self._clear_history,
@@ -24,13 +26,13 @@ class CalculatorREPL:
     
     def run(self):
         self.logger.info("Calculator started")
-        self._output("Welcome to Joe's REPL calculator-o-matic 5000! \n Type 'help' for instructions or type 'exit' to quit.")
+        self._show_info("Welcome to Joe's REPL calculator-o-matic 5000! \n Type 'help' for instructions or type 'exit' to quit.")
         try:
             self._loop()
         except (EOFError, KeyboardInterrupt):
-            self._output("")
+            self._show_info("")
         self.logger.info("Calculator stopped")
-        self._output("Goodbye - thank you for doing math with me!")
+        self._show_info("Goodbye - thank you for doing math with me!")
 
     def _loop(self):
         while True:
@@ -45,12 +47,12 @@ class CalculatorREPL:
                 self._handle(command)
             except CalculatorError as error:
                 self.logger.warning("Command '%s' failed: %s", command, error)
-                self._output(f"Error: {error}")
+                self._show_error(f"Error: {error}")
             except (EOFError, KeyboardInterrupt):
                 raise
             except Exception:
                 self.logger.error("Unexpected error in command '%s'", command, exc_info=True)
-                self._output("Unexpected error. Details were written to the log.")
+                self._show_error("Unexpected error. Details were written to the log.")
           
     
     def _handle(self, command):
@@ -62,41 +64,41 @@ class CalculatorREPL:
 
     def _show_history(self):
         if not self.calculator.history:
-            self._output("No calculations yet - make some math!")
+            self._show_info("No calculations yet - make some math!")
             return
         for number, entry in enumerate(self.calculator.history, start=1):
-            self._output(
+            self._show_result(
                 f"{number}. {entry.operation}({entry.operand_a}, {entry.operand_b})"
                 f" = {entry.result}"
             )
 
     def _clear_history(self):
         if not self.calculator.history:
-            self._output("History is already empty.")
+            self._show_info("History is already empty.")
             return
         self.calculator.clear_history()
-        self._output("History cleared - you are now a blank slate.")
+        self._show_info("History cleared - you are now a blank slate.")
 
     def _undo(self):
         self.calculator.undo()
-        self._output("Undid last change.")
+        self._show_info("Undid last change.")
 
     def _redo(self):
         self.calculator.redo()
-        self._output("Redid last change.")
+        self._show_info("Redid last change.")
 
     def _save(self):
         path = self._history_file()
         self.calculator.save(path, self.encoding)
-        self._output(f"History saved to {path}")
+        self._show_result(f"History saved to {path}")
 
     def _load(self):
         path = self._history_file()
         self.calculator.load(path, self.encoding)
-        self._output(f"History loaded from {path} ({len(self.calculator.history)} entries)")
+        self._show_result(f"History loaded from {path} ({len(self.calculator.history)} entries)")
 
     def _show_help(self):
-        self._output(get_helper_text())
+        self._show_info(get_helper_text())
 
     def _history_file(self):
         if self.history_path is None:
@@ -108,12 +110,12 @@ class CalculatorREPL:
 
         operands = self._read_operands()
         if operands is None:
-            self._output("Cancelled.")
+            self._show_info("Cancelled.")
             return
 
         a, b = operands
         result = self.calculator.calculate(command, a, b)
-        self._output(f"Result: {result}")
+        self._show_result(f"Result: {result}")
 
     def _read_operands(self):
         first = self._read_number("First number (or 'cancel'):")
@@ -132,5 +134,13 @@ class CalculatorREPL:
             try: 
                 return parse_number(text, self.max_input_value)
             except ValidationError as error:
-                self._output(f"Error: {error}")
+                self._show_error(f"Error: {error}")
 
+    def _show_info(self, text):
+        self._output(self.colors.info(text))
+
+    def _show_error(self, text):
+        self._output(self.colors.error(text))
+
+    def _show_result(self, text):
+        self._output(self.colors.success(text))
