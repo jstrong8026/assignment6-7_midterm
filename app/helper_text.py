@@ -39,6 +39,10 @@ def get_helper_text():
     lines += [
         "Capital letters and extra spaces will be ignored, so don't stress about them.",
         "",
+        "Colors:",
+        "  Output is color-coded, but this can be disabled at startup. To turn colors off, start the program with:",
+        "  NO_COLOR=1 python3 main.py"
+        "",
         "Other Commands (you can enter these at any prompt):"]
     for name, description in COMMANDS:
         lines.append(f"  {name:<8} -  {description}")

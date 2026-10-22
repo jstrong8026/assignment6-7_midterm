@@ -11,3 +11,6 @@ def test_help_mentions_commands():
     text = get_helper_text().lower()
     assert "help" in text
     assert "exit" in text
+
+def test_help_explains_disabling_color_option():
+    assert "NO_COLOR" in get_helper_text()
